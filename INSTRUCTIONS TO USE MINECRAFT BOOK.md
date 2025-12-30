@@ -22,7 +22,7 @@ You can check if you have it installed by typing "python" in Command Prompt.
 
 I highly recommend the image to be resized down to **72 x 56** and **white/black** only so you would know what it looks like.
 
-The image will be stretched and distrusted a lot being converted from original into ASCII art. Please take note of that!
+The image will be stretched and distorted a lot being converted from original into ASCII art. Please take note of that!
 
 
 
@@ -32,7 +32,7 @@ The image will be stretched and distrusted a lot being converted from original i
 
  	Once you have Python and the image ready, open Command Prompt and type "python"
 
-then you can drag "braille\_ascii\_art.py" file into it.
+then you can drag "main.py" file into it.
 
 After that, drag the image you want to convert into the command prompt.
 
