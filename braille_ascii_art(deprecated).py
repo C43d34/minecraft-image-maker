@@ -1,6 +1,13 @@
+'''
+Docstring for braille_ascii_art(deprecated)
+
+This version of the program is deprecated because its output is unable to properly paste into books as of 1.21.10
+'''
+
 import sys
 from PIL import Image
-
+import argparse
+import os
 # Braille Unicode blocks start at 0x2800
 BRAILLE_BASE = 0x2800
 
