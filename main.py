@@ -96,7 +96,7 @@ def Parse_CLI_Arguments() -> tuple[argparse.Namespace, list[str]]:
     group = Parser.add_mutually_exclusive_group(required=False)
     group.add_argument('-f', '--file', metavar='PATH', 
                       help='Convvert .png or .jpg image at the specified path')
-    group.add_argument('-d', '--directory', metavar='PATH', 
+    group.add_argument('-d', '--directory', metavar='PATH',
                       help='Convert images inside a directory at the specified path')
     
 ## Create option to newline to be included in the output (Not compatible with Minecraft 1.21.10 for some reason)
@@ -233,6 +233,7 @@ if __name__ == "__main__":
 ## Parse in CLI Arguments 
     parsed_arguments: argparse.Namespace = Parse_CLI_Arguments()[0]
     unknown_extra_arguments: list[str] = Parse_CLI_Arguments()[1] #additional arguments from the command that don't match up with pre-defined argument parser. 
+    # print(vars(parsed_arguments)) #DEBUG
 
 ## Collect any program parameter options
     options : dict = Get_Options_From_Arguments(parsed_arguments)
