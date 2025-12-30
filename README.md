@@ -1,4 +1,4 @@
-INSTRUCTIONS TO USE MINECRAFT BOOK IMAGE GENERATOR:
+## INSTRUCTIONS TO USE MINECRAFT BOOK IMAGE GENERATOR:
 
 
 
@@ -45,26 +45,26 @@ When you press enter, the program will run and generate a text file in the "outp
 You can then copy text within this file and paste into a Minecraft book.
 
 
-# Alternative commandline operating modes
+## Alternative commandline operating modes
 There are additional optional commandline flags available for ease of use
-*-f, --file            : provide this flag with a file path afterwards (same as default behavior)*
-    EX. "python main.py -f <file_path>"
+ *-f, --file            : provide this flag with a file path afterwards (same as default behavior)*
+-    EX. "python main.py -f <file_path>"
 
-*-d, --directory       : provide this flag with a directory path. All images inside the directory path will be converted.*
-    EX. "python main.py -d <dir_path>"
-    EX. "python main.py -d ."                   (converts all images inside the current working directory)
-    EX. "python main.py -d ./input_images"      (converts all images inside the local folder "input_images")
+ *-d, --directory       : provide this flag with a directory path. All images inside the directory path will be converted.*
+-    EX. "python main.py -d <dir_path>"
+-    EX. "python main.py -d ."                   (converts all images inside the current working directory)
+-    EX. "python main.py -d ./input_images"      (converts all images inside the local folder "input_images")
 
-*-n, --include_newline : this flag sets the program to generate the ascii image with the newline character included. This may break the ability to paste the text in some versions of Minecraft (1.21.10)* 
-    EX. "python main.py -n"
+ *-n, --include_newline : this flag sets the program to generate the ascii image with the newline character included. This may break the ability to paste the text in some versions of Minecraft (1.21.10)* 
+-    EX. "python main.py -n"
 
 Commandline flags can be combined to convert all images from a directory and convert them with newline included as such:
-    EX. "python main.py -n -d ./input_images" 
+-    EX. "python main.py -n -d ./input_images" 
 
 
 
 
-**Common problems encountered:
+## Common problems encountered:
 Text cannot be pasted into Minecraft book**
 
 That is most likely because your pasted text size is too big.
