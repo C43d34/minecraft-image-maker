@@ -47,6 +47,7 @@ You can then copy text within this file and paste into a Minecraft book.
 
 ## Alternative commandline operating modes
 There are additional optional commandline flags available for ease of use
+
  *-f, --file            : provide this flag with a file path afterwards (same as default behavior)*
 -    EX. "python main.py -f <file_path>"
 
