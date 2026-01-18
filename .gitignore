@@ -1,3 +1,8 @@
-*.txt
+output_images/*.txt
 *.png
 *.jpg
+*.xcf
+./venv
+venv/
+./__pycache__
+__pycache__/

@@ -19,11 +19,19 @@ BRAILLE_DOTS = [
     (1, 2),  # dot 6
     (0, 3),  # dot 7
     (1, 3)   # dot 8
-]
+] 
+# BRAILLE_PARTIAL_FILLER_4 = chr(BRAILLE_BASE + 0x95)  # "⢕"
+# BRAILLE_PARTIAL_FILLER_4 = chr(BRAILLE_BASE + 0x36) # "⠶"
+BRAILLE_PARTIAL_FILLER_4 = chr(BRAILLE_BASE + 0x33) # "⠳"
+BRAILLE_PARTIAL_FILLER_2 = chr(BRAILLE_BASE + 0x14)  # "⠔"
+
 OUTPUT_IMAGES_DIRECTORY : str = "output_images"
 
 
-def img_to_braille_ascii(file_path, width=38, height=14, include_newline=False):
+# Threshold for dot on/off
+THRESHOLD = 180 #If the pixel value is greater than the threshold, it will appear empty in the final image 
+THRESHOLD_SPREAD = 50 #Defines the secondary threshold of which a cell of pixels can be considered to be "partially filled" even if none of the pixels themselves meet the base threshold 
+def img_file_to_braille_ascii(file_path, width=38, height=14, include_newline=False, resize_sampler=Image.BICUBIC) -> str:
     """
     Convert an image to Braille ASCII art of specified width and height.
     Uses a single dot braille (0x2800) for empty space.
@@ -31,30 +39,24 @@ def img_to_braille_ascii(file_path, width=38, height=14, include_newline=False):
     """
     # Braille cell: 2x4 pixels each
     cell_w, cell_h = 2, 4
-    img_w, img_h = width * cell_w, height * cell_h
+
+    skew_factor = 1
+    img_w, img_h = width * cell_w, int((height * cell_h)/skew_factor)
+
 
     # Open and convert image to grayscale
     img = Image.open(file_path)
     img = img.convert('L')
-    img = img.resize((img_w, img_h), Image.BILINEAR)
+    img = img.resize((img_w, img_h), resize_sampler)
 
-    # Threshold for dot on/off
-    threshold = 127
 
     braille_lines = []
-    for y in range(0, img_h, cell_h):
+    for y in range(0, img_h, cell_h): #iterate each row of pixels by the cell height
         line = ""
-        for x in range(0, img_w, cell_w):
-            dots = 0
-            for idx, (dx, dy) in enumerate(BRAILLE_DOTS):
-                px = x + dx
-                py = y + dy
-                if px < img_w and py < img_h:
-                    val = img.getpixel((px, py))
-                    if val < threshold:
-                        dots |= (1 << idx)
-            braille_char = chr(BRAILLE_BASE + dots)
-            line += braille_char
+        for x in range(0, img_w, cell_w): #iterate each column of pixels by the cell width
+               
+            #Find the Braille character that best describes this cell of 8 pixels
+            line += cell_braille_output(img, x, y, img_w, img_h, threshold=THRESHOLD, threshold_spread=THRESHOLD_SPREAD)
         braille_lines.append(line)
         
 
@@ -65,6 +67,100 @@ def img_to_braille_ascii(file_path, width=38, height=14, include_newline=False):
         # The original code used "\n".join(braille_lines)
         # This change joins the lines with an empty string ("") instead of "\n"
         return "".join(braille_lines)
+
+
+import time
+def img_to_braille_ascii(img, threshold: int, threshold_spread: int, skew_factor= 1.0, width=38, height=14, include_newline=False, resize_sampler=Image.BICUBIC) -> str:
+    """
+    Convert an image to Braille ASCII art of specified width and height.
+    Uses a single dot braille (0x2800) for empty space.
+    The output is a single, continuous string (no newline characters).
+    """
+
+    # Braille cell: 2x4 pixels each
+    cell_w, cell_h = 2, 4
+
+    skew_factor = skew_factor
+    img_w, img_h = width * cell_w, int((height * cell_h)/skew_factor)
+
+
+    # Open and convert image to grayscale
+    img = img.convert('L')
+    img = img.resize((img_w, img_h), resize_sampler)
+
+
+    braille_lines = []
+    for y in range(0, img_h, cell_h): #iterate each row of pixels by the cell height
+        line = ""
+        for x in range(0, img_w, cell_w): #iterate each column of pixels by the cell width
+               
+            #Find the Braille character that best describes this cell of 8 pixels
+            line += cell_braille_output(img, x, y, img_w, img_h, threshold=threshold, threshold_spread=threshold_spread)
+        braille_lines.append(line)
+        
+
+    braille_lines.append(f"{threshold}")
+    print(f"finish {threshold}")
+    if include_newline == True:
+        return "\n".join(braille_lines)
+    else:    
+        # --- MODIFIED PART ---
+        # The original code used "\n".join(braille_lines)
+        # This change joins the lines with an empty string ("") instead of "\n"
+        return "".join(braille_lines)
+
+
+
+def cell_braille_output(img, pixel_pos_x: int, pixel_pos_y:int, img_w: int, img_h: int, threshold: int, threshold_spread: int) -> str:
+    threshold: int = threshold
+    dots = 0 
+    cell_avg_value = 0
+    '''
+    Every Braille character contains 8 pixels (2 x 4)
+    I think we are checking each pixel and including it as a dot or not if it passes the threshold
+    The final number of dots = the Braille character to use
+    
+    1. Problem with this approach is that it doesn't care about the position of the dots. We lose some shape accuracy
+    2. Other problem is that it will only find pixels at the threshold. But what if all the pixels are just barely below the threshold? It will treat that entire character as empty. 
+        It would possibly look more accurate to consider it as a partially filled Braille character, because it is so close to the threshold but still underneath. 
+    
+    '''
+    # print("\n Yurp") #DEBUG
+
+    for idx, (dx, dy) in enumerate(BRAILLE_DOTS): # Check each pixel that lies within this Braille cell
+        px = pixel_pos_x + dx 
+        py = pixel_pos_y + dy
+        if px < img_w and py < img_h:
+            val = img.getpixel((px, py))  #get value of the current pixel from this cell
+            cell_avg_value += val  #accumulate value of the cell from this pixel
+            
+            if val < threshold: #Check if this pixel should yield a Braille dot. 
+                # Enable the corresponding braille dot for this pixel position in the cell
+                dots |= (1 << idx)
+                # print(f"{idx} {dots}") #DEBUG 
+
+
+    braille_char = ""
+    if (dots == 0):
+        '''
+        If the average value of the cell is within the threshold deviation range, we can partially shade the cell to save some detail that would otherwise be cuttoff by the threshold
+
+        Check the cell with increasing range away from the threshold. The further offset away from the threshold, the more white (clear) the cell should appear
+        '''
+        cell_avg_value = int(cell_avg_value / len(BRAILLE_DOTS))
+        if cell_avg_value - (threshold_spread/2) < threshold: 
+            braille_char = BRAILLE_PARTIAL_FILLER_4
+            print("I guess this worked4") #DEBUG
+        elif cell_avg_value - threshold_spread < threshold: 
+            braille_char = BRAILLE_PARTIAL_FILLER_2
+            print("I guess this worked2") #DEBUG
+        else:
+            braille_char = chr(BRAILLE_BASE + dots)
+    else:
+        braille_char = chr(BRAILLE_BASE + dots)
+
+
+    return braille_char
 
 
 
@@ -226,7 +322,6 @@ def Get_Options_From_Arguments(args: argparse.Namespace) -> dict:
 
 
 
-
 #MAIN FUNCTION 
 if __name__ == "__main__":
 
@@ -246,14 +341,24 @@ if __name__ == "__main__":
     for file in file_paths:
         if (file.endswith(".png")) or (file.endswith(".jpg")): #Only convert the file if it is an image
             
-            art = img_to_braille_ascii(file, include_newline=options["include_newline"]) #convert image
             
-            output_image_path = OUTPUT_IMAGES_DIRECTORY + "/" + file.split("\\")[-1] + ".txt"
-            with open(output_image_path, 'w', encoding='utf-8') as f:
-                print(f"Created ascii file: {output_image_path}")
-                f.write(art) #write ascii to .txt file
+            #EXPERIMENTING WITH DIFFERENT SAMPLERS
+            resamplers = {
+                # "BILINEAR": Image.BILINEAR, 
+                # "LANCZOS" : Image.LANCZOS,
+                "BICUBIC" : Image.BICUBIC,
+                # "NEAREST" : Image.NEAREST
+                }
+            for sampler_name, sampler in resamplers.items():
+                art = img_file_to_braille_ascii(file, include_newline=options["include_newline"], resize_sampler=sampler) #convert image
+                
+                file_name = "(" + sampler_name + ")" + file.split("\\")[-1] + ".txt"
+                output_image_path = OUTPUT_IMAGES_DIRECTORY + "/" + file_name
+                with open(output_image_path, 'w', encoding='utf-8') as f:
+                    print(f"Created ascii file: {output_image_path}")
+                    f.write(art) #write ascii to .txt file
 
-
+    print(BRAILLE_PARTIAL_FILLER_4) #DEBUG
 
 # if __name__ == "__main__":
 #     if len(sys.argv) < 2:
